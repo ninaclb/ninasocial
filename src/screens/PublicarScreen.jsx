@@ -1,25 +1,63 @@
 import React, { useState } from "react";
-import { Button, Image, View, TextInput } from "react-native";
+import { Button, Image, View, TextInput, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db, storage } from "../config/firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F4F4F4",
+    padding: 20,
+  },
+  input: {
+    height: 50,
+    fontSize: 16,
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
+    backgroundColor: "white",
+  },
+  button: {
+    backgroundColor: "#16337E",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    alignSelf: "center",
+    marginBottom: 20,
+    borderRadius: 5,
+  },
+  uploadButton: {
+    backgroundColor: "#16337E",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    alignSelf: "center",
+  },
+});
 
 export default function ImagePickerExample() {
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState("");
 
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
-    console.log(result);
 
     if (!result.cancelled) {
       setImage(result.assets[0].uri);
@@ -31,16 +69,10 @@ export default function ImagePickerExample() {
       const response = await fetch(image);
       const blob = await response.blob();
 
-      // Upload the blob to Firebase Storage
-
-      const storageRef = ref(storage, "images/" + Date.now()); // Update the path as needed
+      const storageRef = ref(storage, "images/" + Date.now());
       const uploadTask = uploadBytes(storageRef, blob);
 
-      // Wait for the upload to complete
-
       await uploadTask;
-
-      // Get the download URL and store it in Firestore
 
       const imageURL = await getDownloadURL(storageRef);
 
@@ -58,7 +90,7 @@ export default function ImagePickerExample() {
         title,
         imageURL,
         timestamp: serverTimestamp(),
-      }); // Store the post data in Firestore
+      });
 
       setImage(null);
       setTitle("");
@@ -69,19 +101,29 @@ export default function ImagePickerExample() {
   };
 
   return (
-    <View>
+    <View style={styles.container}>
       <TextInput
-        placeholder="Enter post title"
+        placeholder="Título da publicação"
         value={title}
         onChangeText={setTitle}
+        style={styles.input}
       />
-      <Button title="Pick an image from camera roll" onPress={pickImage} />
+      <Button
+        title="Pick an image from camera roll"
+        onPress={pickImage}
+        color="#16337E"
+      />
 
       {image && (
-        <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />
+        <Image source={{ uri: image }} style={styles.imagePreview} />
       )}
 
-      <Button title="Upload image" onPress={uploadImage} disabled={!image} />
+      <Button
+        title="Upload image"
+        onPress={uploadImage}
+        disabled={!image}
+        color="#16337E"
+      />
     </View>
   );
 }
